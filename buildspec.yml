@@ -35,25 +35,11 @@ phases:
   post_build:
     commands:
 
-      - echo Pushing Backend Image...
-
-      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
-
-      - echo Pushing Frontend Image...
-
-      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
-
-      - printf '{"backend":"%s","frontend":"%s"}' $IMAGE_TAG $IMAGE_TAG > imageDetail.json
-
       - echo Tagging latest images...
 
-      - docker tag \
-        $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG \
-        $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:latest
+      - docker tag $BACKEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:latest
 
-      - docker tag \
-        $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG \
-        $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:latest
+      - docker tag $FRONTEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:latest
 
       - echo Pushing Backend Images...
 
@@ -64,6 +50,8 @@ phases:
 
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:latest
+
+      - printf '{"backend":"%s","frontend":"%s"}' $IMAGE_TAG $IMAGE_TAG > imageDetail.json
 
 artifacts:
   files:
