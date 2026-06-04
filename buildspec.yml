@@ -15,7 +15,7 @@ phases:
       - BACKEND_REPO=pipelinepulse/backend
       - FRONTEND_REPO=pipelinepulse/frontend
 
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - export IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
   build:
     commands:
