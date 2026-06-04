@@ -1,0 +1,176 @@
+# PipelinePulse
+
+PipelinePulse is a lightweight Green FinOps web app for estimating CI/CD pipeline cost, power use, energy use, and CO2e emissions.
+
+## Runtime Architecture
+
+```text
+Browser
+  -> Frontend container: Nginx + static HTML/CSS/JS
+    -> /api proxy
+      -> Backend container: Flask + Gunicorn
+        -> Postgres
+```
+
+The images are environment-driven and can run in AWS ECS without code changes.
+
+## Local Run
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and replace placeholder secrets, then start:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+- Frontend: `http://localhost:8080`
+- Frontend health: `http://localhost:8080/health`
+- Backend health: `http://localhost:5000/api/health`
+
+## Build Images
+
+```bash
+docker build -t pipelinepulse-backend ./backend
+docker build -t pipelinepulse-frontend ./frontend
+```
+
+Push those images to ECR and reference them from ECS task definitions.
+
+## ECS Deployment Notes
+
+Recommended production setup:
+
+- Use Amazon RDS PostgreSQL for `DATABASE_URL`.
+- Store `SECRET_KEY` and database credentials in AWS Secrets Manager or SSM Parameter Store.
+- Place the frontend behind an ALB listener.
+- Either run frontend and backend in the same ECS task, or use Cloud Map/service discovery for backend discovery.
+
+Frontend health check path:
+
+```text
+/health
+```
+
+Backend health check path:
+
+```text
+/api/health
+```
+
+## Backend Environment
+
+Required:
+
+```text
+DATABASE_URL
+SECRET_KEY
+```
+
+Optional:
+
+```text
+FRONTEND_ORIGINS
+REDIS_URL
+ENABLE_LIVE_PRICING
+PRICING_CACHE_TTL_SECONDS
+CARBON_CACHE_TTL_SECONDS
+AUTO_CREATE_TABLES
+SESSION_COOKIE_SECURE
+SESSION_COOKIE_SAMESITE
+PREFERRED_URL_SCHEME
+PORT
+WEB_CONCURRENCY
+GUNICORN_THREADS
+GUNICORN_TIMEOUT
+```
+
+Conditionally required only when `ENABLE_LIVE_PRICING=true`:
+
+```text
+AWS_PRICING_BASE_URL
+AZURE_RETAIL_PRICES_URL
+```
+
+Production recommendations:
+
+```text
+SESSION_COOKIE_SECURE=true
+SESSION_COOKIE_SAMESITE=Lax
+PREFERRED_URL_SCHEME=https
+AUTO_CREATE_TABLES=true
+```
+
+`AUTO_CREATE_TABLES=true` keeps this demo deployable without a migration job. For a larger production system, replace that with a migration workflow.
+
+`REDIS_URL` is optional. If it is not set, PipelinePulse skips cache reads/writes and still calculates reports normally.
+
+## Frontend Environment
+
+Required:
+
+```text
+BACKEND_UPSTREAM
+```
+
+Optional:
+
+```text
+API_BASE
+NGINX_PORT
+API_PROXY_PATH
+PROXY_READ_TIMEOUT
+STATIC_CACHE_CONTROL
+```
+
+Common ECS values:
+
+Same ECS task, frontend proxies to backend container:
+
+```text
+API_BASE=/api
+BACKEND_UPSTREAM=http://127.0.0.1:5000
+API_PROXY_PATH=/api/
+```
+
+Separate backend ECS service with service discovery:
+
+```text
+API_BASE=/api
+BACKEND_UPSTREAM=http://pipelinepulse-backend.local:5000
+API_PROXY_PATH=/api/
+```
+
+The frontend writes `/usr/share/nginx/html/config.js` at container startup, so browser API configuration is runtime-driven.
+
+## API Endpoints
+
+```text
+GET  /api/health
+GET  /api/options
+GET  /api/reports
+POST /api/reports
+```
+
+Example report request:
+
+```json
+{
+  "pipeline_name": "CI build and test",
+  "provider": "aws",
+  "region": "us-east-1",
+  "instance_type": "t3.medium",
+  "duration_minutes": 12,
+  "cpu_utilization": 65,
+  "pricing_mode": "approximate",
+  "repository": "org/repo",
+  "branch": "feature/green-ci",
+  "commit_sha": "abc123"
+}
+```

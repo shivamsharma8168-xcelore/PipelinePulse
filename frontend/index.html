@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PipelinePulse</title>
+    <link rel="stylesheet" href="styles.css?v=20260603-report-updates" />
+  </head>
+  <body>
+    <div class="app-bg"></div>
+
+    <main class="page-shell">
+      <nav class="topbar" aria-label="Primary navigation">
+        <a class="brand" href="/">
+          <span class="brand-mark">P</span>
+          <span>
+            <strong>PipelinePulse</strong>
+            <small>Green FinOps</small>
+          </span>
+        </a>
+        <div class="topbar-links">
+          <a href="#reportForm">Estimator</a>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#history">Reports</a>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot"></span>
+          No login required
+        </div>
+      </nav>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="hero-kicker">
+            <span>Green FinOps for CI/CD</span>
+            <strong>Cost + CO2 insights</strong>
+          </div>
+          <h1>Pipeline Green Impact Reports</h1>
+          <p>
+            Estimate CI/CD run cost, energy use, and emissions from a simple cloud runner profile.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-link" href="#reportForm">Generate report</a>
+            <a class="ghost-link" href="#history">View reports</a>
+          </div>
+        </div>
+
+        <aside class="hero-insight-card" aria-label="Session summary">
+          <div class="orbital-card-header">
+            <span class="live-indicator"></span>
+            Session workspace
+          </div>
+          <strong id="reportCount">0</strong>
+          <p>Reports stored for this browser session</p>
+          <div class="mini-metrics">
+            <span>Postgres</span>
+            <span>Redis cache</span>
+            <span>Flask API</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="workspace">
+        <form id="reportForm" class="panel estimator-card">
+          <div class="panel-heading split-heading">
+            <div>
+              <p class="eyebrow">Estimator</p>
+              <h2>Impact estimator</h2>
+            </div>
+            <span class="step-badge">01</span>
+          </div>
+
+          <div class="mode-row">
+            <div>
+              <span class="mode-title">Report accuracy mode</span>
+              <p id="modeHelp">Use Blue for approx results and Green (API required) for better accurate results.</p>
+            </div>
+            <div class="mode-toggle" role="group" aria-label="Report accuracy mode">
+              <button
+                id="approxModeButton"
+                class="mode-option approximate active"
+                type="button"
+                aria-pressed="true"
+              >
+                <span>Blue</span>
+                Approximate
+              </button>
+              <button id="accurateModeButton" class="mode-option accurate" type="button" aria-pressed="false">
+                <span>Green</span>
+                Accurate
+              </button>
+            </div>
+          </div>
+
+          <input id="pricingModeInput" name="pricing_mode" type="hidden" value="approximate" />
+          <input id="liveApiKeyInput" name="live_api_key" type="hidden" />
+
+          <div id="approxWarning" class="warning-banner compact">
+            Approximate estimate: use Live API keys to get more accurate pricing results.
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">
+              <span>Pipeline</span>
+              <small>Basic run metadata</small>
+            </div>
+            <label>
+              Pipeline name
+              <input name="pipeline_name" type="text" placeholder="CI build and test" />
+            </label>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">
+              <span>Cloud profile</span>
+              <small>Provider, region and runner</small>
+            </div>
+            <div class="grid-two">
+              <label>
+                Cloud provider
+                <select name="provider" id="providerSelect" required></select>
+              </label>
+
+              <label>
+                Region
+                <select name="region" id="regionSelect" required></select>
+              </label>
+            </div>
+
+            <label>
+              Runner / instance type
+              <select name="instance_type" id="instanceSelect" required></select>
+            </label>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">
+              <span>Runtime</span>
+              <small>Execution and billing assumptions</small>
+            </div>
+            <div class="grid-two">
+              <label>
+                Duration minutes
+                <input name="duration_minutes" type="number" min="0.1" step="0.1" value="12" required />
+              </label>
+
+              <label>
+                CPU utilization %
+                <input name="cpu_utilization" type="number" min="0" max="100" step="1" value="65" />
+              </label>
+            </div>
+            <div class="grid-two">
+              <label>
+                Expected runs / month
+                <input name="expected_runs_per_month" type="number" min="0" step="1" value="300" />
+              </label>
+
+              <label>
+                Monthly budget USD
+                <input name="monthly_budget_usd" type="number" min="0" step="0.01" value="25" />
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">
+              <span>Optional context</span>
+              <small>Useful for CI/CD traceability</small>
+            </div>
+            <div class="grid-two">
+              <label>
+                Repository
+                <input name="repository" type="text" placeholder="org/repo" />
+              </label>
+
+              <label>
+                Branch
+                <input name="branch" type="text" placeholder="feature/green-ci" />
+              </label>
+            </div>
+
+            <label>
+              Commit SHA
+              <input name="commit_sha" type="text" placeholder="optional" />
+            </label>
+          </div>
+
+          <button class="submit-button" type="submit">
+            <span>Generate report</span>
+            <span aria-hidden="true">-></span>
+          </button>
+          <p id="formMessage" class="message"></p>
+        </form>
+
+        <section id="dashboard" class="panel dashboard-card">
+          <div class="panel-heading split-heading">
+            <div>
+              <p class="eyebrow">Dashboard</p>
+              <h2>Latest report</h2>
+            </div>
+            <span class="step-badge">02</span>
+          </div>
+
+          <div id="emptyState" class="empty-state">
+            <div class="empty-orbit">
+              <span></span>
+            </div>
+            <h3>No report generated yet</h3>
+            <p>Fill the estimator to visualize cost, power, energy and emissions here.</p>
+          </div>
+
+          <div id="reportView" class="hidden">
+            <div class="report-header">
+              <div>
+                <p class="eyebrow">Impact summary</p>
+                <h3 id="reportSummaryTitle">Current pipeline run</h3>
+              </div>
+              <div class="report-actions">
+                <span id="modeSource" class="mode-pill">Approximate</span>
+                <button id="downloadReportButton" class="download-button" type="button">Download PDF</button>
+              </div>
+            </div>
+
+            <div class="metric-grid">
+              <article class="metric-card cost-card">
+                <span id="costMetricLabel">Estimated total run cost</span>
+                <strong id="costMetric">$0.00</strong>
+                <small id="costMetricHelp">Total cost for this pipeline duration</small>
+              </article>
+              <article class="metric-card carbon-card">
+                <span>Estimated CO2e</span>
+                <strong id="carbonMetric">0 g</strong>
+                <small>Carbon emitted by this run</small>
+              </article>
+              <article class="metric-card">
+                <span>Estimated energy use</span>
+                <strong id="energyMetric">0 kWh</strong>
+                <small>Power over duration</small>
+              </article>
+              <article class="metric-card">
+                <span>Estimated avg. power</span>
+                <strong id="powerMetric">0 W</strong>
+                <small>Utilization adjusted</small>
+              </article>
+            </div>
+
+            <div class="insight-grid">
+              <article class="insight-card">
+                <span>Projected monthly bill</span>
+                <strong id="monthlyCostMetric">$0.00</strong>
+                <small id="monthlyCostHelp">Based on expected monthly runs</small>
+              </article>
+              <article class="insight-card">
+                <span>Projected yearly bill</span>
+                <strong id="yearlyCostMetric">$0.00</strong>
+                <small>Approximate annualized compute spend</small>
+              </article>
+              <article class="insight-card">
+                <span>Monthly CO2e</span>
+                <strong id="monthlyCarbonMetric">0 kg</strong>
+                <small>Projected monthly emissions</small>
+              </article>
+              <article class="insight-card">
+                <span>Efficiency score</span>
+                <strong id="efficiencyMetric">0</strong>
+                <small id="efficiencyLabel">Estimated run efficiency</small>
+              </article>
+            </div>
+
+            <div class="detail-shell">
+              <div class="detail-list">
+                <p><span>Run duration used</span><strong id="runDurationDetail"></strong></p>
+                <p><span>Machine hourly rate</span><strong id="hourlyPrice"></strong></p>
+                <p><span>Cost formula</span><strong>Total = hourly rate x duration</strong></p>
+                <p><span>Expected monthly runs</span><strong id="expectedRunsDetail"></strong></p>
+                <p><span>Monthly budget status</span><strong id="budgetStatusDetail"></strong></p>
+                <p><span>Regional grid intensity</span><strong id="carbonIntensity"></strong></p>
+                <p><span>Pricing data source</span><strong id="pricingSource"></strong></p>
+                <p><span>Emissions data source</span><strong id="carbonSource"></strong></p>
+              </div>
+
+              <div class="impact-scale" aria-label="Report intensity indicator">
+                <div class="scale-track">
+                  <span id="impactNeedle"></span>
+                </div>
+                <div class="scale-labels">
+                  <span>Lower</span>
+                  <span>Higher</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="reportWarning" class="warning-banner hidden"></div>
+
+            <div class="equivalent-grid">
+              <article>
+                <span>Phone charges</span>
+                <strong id="phoneChargeMetric">0</strong>
+                <small>Energy equivalent per run</small>
+              </article>
+              <article>
+                <span>Driving distance</span>
+                <strong id="drivingMetric">0 km</strong>
+                <small>Emissions equivalent per run</small>
+              </article>
+              <article>
+                <span>Cleaner-region savings</span>
+                <strong id="regionSavingsMetric">0 kg</strong>
+                <small>Estimated monthly CO2e reduction</small>
+              </article>
+            </div>
+
+            <div class="tip">
+              <span>Carbon optimization tip</span>
+              <p id="recommendation"></p>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="history" class="panel history-panel">
+        <div class="panel-heading split-heading">
+          <div>
+            <p class="eyebrow">Stored in database</p>
+            <h2>Your session report history</h2>
+          </div>
+          <span class="step-badge">03</span>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </main>
+
+    <div id="apiKeyModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <p class="eyebrow">Accurate mode</p>
+        <h2>Please enter Live API key for accurate pricing</h2>
+        <p>
+          The key is kept only in this browser session and is sent with report requests. Approximate
+          mode does not need a key.
+        </p>
+        <label>
+          Live API key
+          <input id="apiKeyField" type="password" placeholder="Paste provider pricing API key" />
+        </label>
+        <div class="modal-actions">
+          <button id="closeApiKeyModal" class="secondary-button" type="button">Use approximate</button>
+          <button id="saveApiKey" type="button">Save key</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="config.js?v=20260603-report-updates"></script>
+    <script src="app.js?v=20260603-report-updates"></script>
+  </body>
+</html>
