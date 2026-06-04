@@ -8,42 +8,42 @@ env:
 phases:
 
   pre_build:
-  commands:
-    - echo Logging into ECR...
+    commands:
+      - echo Logging into ECR...
 
-    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
-    - export BACKEND_REPO=pipelinepulse/backend
-    - export FRONTEND_REPO=pipelinepulse/frontend
+      - export BACKEND_REPO=pipelinepulse/backend
+      - export FRONTEND_REPO=pipelinepulse/frontend
 
-    - export IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - export IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
   build:
-  commands:
-    - echo Building Backend Image...
+    commands:
+      - echo Building Backend Image...
 
-    - docker build -t $BACKEND_REPO:$IMAGE_TAG ./backend
+      - docker build -t $BACKEND_REPO:$IMAGE_TAG ./backend
 
-    - docker tag $BACKEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
+      - docker tag $BACKEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
 
-    - echo Building Frontend Image...
+      - echo Building Frontend Image...
 
-    - docker build -t $FRONTEND_REPO:$IMAGE_TAG ./frontend
+      - docker build -t $FRONTEND_REPO:$IMAGE_TAG ./frontend
 
-    - docker tag $FRONTEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
+      - docker tag $FRONTEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
 
   post_build:
-  commands:
+    commands:
 
-    - echo Pushing Backend Image...
+      - echo Pushing Backend Image...
 
-    - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
+      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
 
-    - echo Pushing Frontend Image...
+      - echo Pushing Frontend Image...
 
-    - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
+      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
 
-    - printf '{"backend":"%s","frontend":"%s"}' $IMAGE_TAG $IMAGE_TAG > imageDetail.json
+      - printf '{"backend":"%s","frontend":"%s"}' $IMAGE_TAG $IMAGE_TAG > imageDetail.json
 
 artifacts:
   files:
